@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include "parser.h"
+#include "input_validation.h"
 #include "encoder.h"
 
 #define MAX_LINE 100
 
-uint8_t MPE = 1;
-uint8_t R2 = 0;
-uint8_t P = 1;
-uint8_t R = 0;
+
+typedef struct
+{
+
+    int num_ce;
+    int ce_count;
+} EncoderState;
 
 /*----------------------------------
  VALIDATION
@@ -56,8 +59,8 @@ int short_bsr(uint8_t *pdu, int *offset, int argc, int lcg, int buffer)
     if (check_range(lcg, 0, 7, "LCG"))
         return FAILURE;
     if (check_range(buffer, 0, 31, "BUFFER"))
-    return FAILURE;
-    
+        return FAILURE;
+
     /*Octet:
      Bits [7:6] → LCG ID
      Bits [5:0] → Buffer Size*/
@@ -80,7 +83,7 @@ FORMAT:
     Octet 2 -> |R (2 BITS) | PCMACX (6 BITS)|
 Total MAC CE (3 BYTES)
 -------------------------------------*/
-int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax)
+int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax, Flags flags)
 {
     if (argc == 0)
     {
@@ -130,8 +133,8 @@ int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax)
         return FAILURE;
 
     pdu[(*offset)++] = LCID_PHR;
-    pdu[(*offset)++] = (P << 7) | (R << 6) | (ph & 0x3F);
-    pdu[(*offset)++] = (MPE << 7) | (R2 << 6) | (pcmax & 0x3F);
+    pdu[(*offset)++] = (flags.P << 7) | (flags.R << 6) | (ph & 0x3F);
+    pdu[(*offset)++] = (flags.MPE << 7) | (flags.R2 << 6) | (pcmax & 0x3F);
     return SUCCESS;
 }
 
@@ -201,7 +204,7 @@ FORMAT:
     Octet → Buffer Size (8 BITS)
 MAC CE payload (3 BYTES) VARIABLE LENGTH
 ---------------------------------------------*/
-int dsr(uint8_t *pdu, int *offset, int argc, int *params)
+int dsr(uint8_t *pdu, int *offset, int argc, int *params, Flags flags)
 {
     if (argc < 3)
     {
@@ -216,9 +219,7 @@ int dsr(uint8_t *pdu, int *offset, int argc, int *params)
     }
 
     int entries = argc / 3;
-
     uint8_t lcg_bitmap = 0;
-
     for (int i = 0; i < entries; i++)
     {
         int lcg = params[i * 3];
@@ -257,10 +258,7 @@ int dsr(uint8_t *pdu, int *offset, int argc, int *params)
         if (check_range(buffer, 0, 255, "BUFFER"))
             return FAILURE;
 
-        uint8_t BT = 0;
-        uint8_t R = 0;
-
-        pdu[(*offset)++] = (BT << 7) | (R << 6) | (rt & 0x3F);
+        pdu[(*offset)++] = (flags.BT << 7) | (flags.R << 6) | (rt & 0x3F);
         pdu[(*offset)++] = buffer;
     }
     return SUCCESS;
@@ -278,7 +276,7 @@ FORMAT:
     |Octet 2 -> | BIT RATE (5 BITS) | X(1 BITS) | R (2 BITS)
 Total MAC CE payload (3 BYTES)
 -----------------------------------------*/
-int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul_dl)
+int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul_dl, Flags flags)
 {
     if (argc < 3)
     {
@@ -329,13 +327,8 @@ int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul
     // -------- ENCODING --------
 
     pdu[(*offset)++] = LCID_REC_BIT_RATE;
-
-    uint8_t R = 0;
-    pdu[(*offset)++] = (lcid << 2) | (ul_dl << 1) | R;
-
-    uint8_t X = 0;
-    uint8_t R2 = 0;
-    pdu[(*offset)++] = (rate << 2) | (X << 1) | R2;
+    pdu[(*offset)++] = (lcid << 2) | (ul_dl << 1) | flags.R;
+    pdu[(*offset)++] = (rate << 2) | (flags.X << 1) | flags.R2;
 
     return SUCCESS;
 }
@@ -528,7 +521,7 @@ Subheader:
 FORMAT:
     Octet 1 ->| LCG ID (8 BITS) |
     Octet 2 ->|Buffer Size (8 BITS) |
-Total MAC CE  (4 BYTES) 
+Total MAC CE  (4 BYTES)
  -----------------------------------*/
 int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
 {
@@ -632,6 +625,9 @@ int get_ce_id(char *type)
 
 int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
 {
+    int offset = 0;
+    Flags flags = {1, 0, 1, 0, 0, 0};
+    EncoderState state = {0};
     if (validate_input_file(filename) == FAILURE)
         return FAILURE;
 
@@ -643,9 +639,6 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
     }
 
     char line[MAX_LINE];
-    int offset = 0;
-    int num_ce = 0;
-    int ce_count = 0;
 
     fgets(line, sizeof(line), fp);
     char extra;
@@ -657,15 +650,15 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
     printf(" TOTAL PDU SIZE : %d\n", *pdu_size);
     // Read number of CEs
     fgets(line, sizeof(line), fp);
-    if (sscanf(line, "num_ce %d", &num_ce) != 1 || num_ce <= 0)
+    if (sscanf(line, "num_ce %d", &state.num_ce) != 1 || state.num_ce <= 0)
     {
         printf("ERROR: Invalid num_ce\n");
         return FAILURE;
     }
 
-    printf("NUMBER OF CE : %d\n\n", num_ce);
+    printf("NUMBER OF CE : %d\n\n", state.num_ce);
     int blank_count = 0;
-    while (fgets(line, sizeof(line), fp) && ce_count < num_ce)
+    while (fgets(line, sizeof(line), fp) && state.ce_count < state.num_ce)
     {
 
         // HANDLE BLANK LINES
@@ -755,7 +748,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
                 fgets(line, sizeof(line), fp);
                 sscanf(strchr(line, '=') + 1, "%d", &b);
 
-                ret = phr(pdu, &offset, 2, a, b);
+                ret = phr(pdu, &offset, 2, a, b, flags);
                 break;
             }
 
@@ -797,7 +790,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
                     fseek(fp, pos, SEEK_SET);
                 }
 
-                ret = rec_bit_rate(pdu, &offset, param_count, a, b, c);
+                ret = rec_bit_rate(pdu, &offset, param_count, a, b, c, flags);
                 break;
             }
             case 5:
@@ -833,7 +826,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
                     params[count++] = val;
                 }
 
-                ret = dsr(pdu, &offset, count, params);
+                ret = dsr(pdu, &offset, count, params, flags);
                 break;
             }
             case 6:
@@ -980,7 +973,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
 
             // SUCCESS MESSAGE
             printf("[SUCCESS] %s Encoded\n\n", type);
-            ce_count++;
+            state.ce_count++;
         }
     }
     // ================= FINAL OUTPUT =================
