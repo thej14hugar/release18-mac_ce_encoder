@@ -6,7 +6,7 @@ Total MAC PDU size
 Number of MAC Control Elements (CEs) to encode
 CE blocks with parameters
 
- ## Compilation
+## Compilation
 To compile the project, run:
 gcc main.c encoder.c input_validation.c -o mac_ce
 After compilation, run:
@@ -21,17 +21,14 @@ The input file consists of:
 ## 1. Global Parameters
 These must appear at the top of the file.
  
-## Total pdu_size
+Total pdu_size
 Defines the total size of the MAC PDU (in bytes)
--------------------
 Total pdu_size value
--------------------
- 
-## num_ce
+
+num_ce
 Number of Control Elements defined in the file
-----------------
 num_ce value
-----------------
+
  
 ## 2. Control Element Blocks
 Each Control Element is defined using the following structure:
