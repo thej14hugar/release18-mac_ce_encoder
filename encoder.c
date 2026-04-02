@@ -5,10 +5,8 @@
 
 #define MAX_LINE 100
 
-
 typedef struct
 {
-
     int num_ce;
     int ce_count;
 } EncoderState;
