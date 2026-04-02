@@ -276,7 +276,7 @@ Subheader:
 FORMAT:
     |Octet 1 -> | lcid (6 BITS) |UL/DL (1 BITS) | BIT RATE (1 BITS)
     |Octet 2 -> | BIT RATE (5 BITS) | X(1 BITS) | R (2 BITS)
-- MAC CE payload (2 BYTES)
+Total MAC CE payload (3 BYTES)
 -----------------------------------------*/
 int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul_dl)
 {
@@ -347,12 +347,12 @@ MAC subPDU with:
     - 16-bit MAC subheader (Extended LCID)
 Subheader:
     Octet 1 → R(1 BITS) | R(1 BITS) | LCID(6 BITS)
-Octet 2 → eLCID = 221 (ENH_PHR)
+    Octet 2 → eLCID (8 BITS)= 221 (ENH_PHR)
 FORMAT:
     Octet 1 → P(0/1) | V(0/1) | PH1 (6 BIT)
     Octet 2 → R(0/1) | V(0/1) | PH2 (6 BIT)
     Octet 3 → R(0/) 2 BIT | PCMAAX (6 BIT)
-- MAC CE payload (3 BYTES)
+Total MAC CE payload (5 BYTES)
 ----------------------------------*/
 int enhanced_phr(uint8_t *pdu, int *offset, int argc, int *params)
 {
@@ -414,11 +414,11 @@ MAC subPDU with:
     16-bit MAC subheader (Extended LCID)
 Subheader:
     Octet 1 → R91 BITS) | R(1 BITS) | LCID(6 BITS)
-    Octet 2 → eLCID = 222 (SL-LBT)
+    Octet 2 → eLCID(8 BITS)= 222 (SL-LBT)
 FORMAT:
     Octet 1 -> | R R R R4 R3 R2 R1 R0 |
     R(3 BIT) (0/1) | R4-R0 (5 BIT)
-MAC CE payload (1 BYTES)
+Total MAC CE (3 BYTES)
 ----------------------------------*/
 int sl_lbt(uint8_t *pdu, int *offset, int value)
 {
@@ -453,7 +453,7 @@ FORMAT:
     Octet 1 -> |C7 C6 C5 C4 C3 C2 C1 SP|
     Octet 2 -> |S7 S6 S5 S4S S3 S2 S1 S0 |(8 BIT)
     Octet 3 ->  |AC(0/1) | ID(0/1) | CANDIDATE OR R BITS(6 BIT)|
-MAC CE payload (3 BYTES) VARIABLE LENGTH
+Total MAC CE(5 BYTES) VARIABLE LENGTH
  ---------------------------------------*/
 int enhanced_bfr(uint8_t *pdu, int *offset, int argc, int *params)
 {
@@ -523,12 +523,12 @@ int enhanced_bfr(uint8_t *pdu, int *offset, int argc, int *params)
 MAC subPDU with:
     16-bit MAC subheader (Extended LCID)
 Subheader:
-     Octet 1 → R(1 BITS) | R91 BITS) | LCID(1 BITS)
+     Octet 1 → R(1 BIT) | R(1 BIT) | LCID(6 BIT)
     Octet 2 → eLCID = 245 (EXTENDED_BSR)
 FORMAT:
-    Octet 1 ->| LCG ID (8 BIT) |
-    Octet 2 ->|Buffer Size (8 BIT) |
-MAC CE payload (2 BYTES) 
+    Octet 1 ->| LCG ID (8 BITS) |
+    Octet 2 ->|Buffer Size (8 BITS) |
+Total MAC CE  (4 BYTES) 
  -----------------------------------*/
 int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
 {
