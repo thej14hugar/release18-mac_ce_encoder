@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #define MAX_MAC_CE_SIZE 255
-#define MAX_LINE 100
 
 #define SUCCESS 0
 #define FAILURE -1
@@ -17,12 +16,6 @@ typedef struct
     uint8_t BT;
     uint8_t X;
 } Flags;
-
-typedef struct
-{
-    int num_ce;
-    int ce_count;
-} EncoderState;
 
 #define LCID_SHORT_BSR 61
 #define LCID_PHR 57

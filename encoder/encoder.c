@@ -25,13 +25,13 @@ int check_range(int val, int min, int max, const char *name)
 }
 
 /*******************************************************************
- * function: short_bsr
- ********************************************************************
- *  Brief: MAC subPDU with 8-bit MAC subheader
- *  Subheader: R (2 BITS) LCID (6 BITS)
- *  Format: LCG ID (3 BITS) Buffer Size (5 BITS)
- *  Total MAC CE (2 BYTES)
- ********************************************************************/
+* function: short_bsr
+********************************************************************
+*  Brief: MAC subPDU with 8-bit MAC subheader
+*  Subheader: R (2 BITS) LCID (6 BITS)
+*  Format: LCG ID (3 BITS) Buffer Size (5 BITS)
+*  Total MAC CE (2 BYTES)
+********************************************************************/
 int short_bsr(uint8_t *pdu, int *offset, int argc, int lcg, int buffer)
 {
     if (argc < 2)
@@ -68,13 +68,13 @@ int short_bsr(uint8_t *pdu, int *offset, int argc, int lcg, int buffer)
 
 /**********************************************************
  *function:phr
- ***********************************************************
- * Brief: MAC subPDU with: 8-bit MAC subheader
- * Subheader:R(2 BITS) LCID(6 BITS)
- * Format:Octet 1 -> P (1 BITS) R(1 BITS) PH (6 BITS)
- *        Octet 2 -> R (2 BITS)  PCMACX (6 BITS)
- *        Total MAC CE (3 BYTES)
- ************************************************************/
+***********************************************************
+* Brief: MAC subPDU with: 8-bit MAC subheader
+* Subheader:R(2 BITS) LCID(6 BITS)
+* Format:Octet 1 -> P (1 BITS) R(1 BITS) PH (6 BITS)
+*        Octet 2 -> R (2 BITS)  PCMACX (6 BITS)
+*        Total MAC CE (3 BYTES)
+************************************************************/
 int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax, Flags flags)
 {
     if (argc == 0)
@@ -132,13 +132,13 @@ int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax, Flags flags)
 
 /*****************************************************
  *function:crnti
- ********************************************************
- * Brief: MAC subPDU with: 8-bit MAC subheader
- * Subheader:R(2 BITS) LCID(6 BITS)
- * Format:Octet 1 ->CRNTI(8 BITS)
- *        Octet 2 -> CRNTI(8 BITS)
- * Total MAC CE (3 BYTES)
- ********************************************************/
+********************************************************
+* Brief: MAC subPDU with: 8-bit MAC subheader
+* Subheader:R(2 BITS) LCID(6 BITS)
+* Format:Octet 1 ->CRNTI(8 BITS)
+*        Octet 2 -> CRNTI(8 BITS)
+* Total MAC CE (3 BYTES)
+********************************************************/
 int crnti(uint8_t *pdu, int *offset, int argc, int value)
 {
     if (argc == 0)
@@ -185,9 +185,9 @@ int crnti(uint8_t *pdu, int *offset, int argc, int value)
 * Subheader:Octet 1 → R (1 BITS)| R (1 BITS) | LCID (6 BITS)
             Octet 2 → eLCID(8 BITS)= 228 (DSR)
 * Format:   Octet 1 → LCG bitmap (which LCGs are present)
-*           Octet →  BT (1 BIT) R (1 BIT)  Remaining Time (6 BITS)
+*           Octet →  BT (1 BIT) R (1 BIT)  Remaining Time (6 BITS) 
 *           Octet → Buffer Size (8 BITS)
-* Total MAC CE (5 BYTES)
+* Total MAC CE (5 BYTES) 
 **************************************************************/
 int dsr(uint8_t *pdu, int *offset, int argc, int *params, Flags flags)
 {
@@ -489,8 +489,8 @@ function: extended_bsr
 * MAC subPDU with: 16-bit MAC subheader (Extended LCID)
 * Subheader: Octet 1 → R(2 BITS) LCID(6 BIT)
              Octet 2 → eLCID = 245 (EXTENDED_BSR)
-* Format:    Octet 1 -> LCG ID (8 BITS)
-             Octet 2 ->Buffer Size (8 BITS)
+* Format:    Octet 1 -> LCG ID (8 BITS) 
+             Octet 2 ->Buffer Size (8 BITS) 
 * Total MAC CE  (4 BYTES)
 ***************************************************************/
 int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
@@ -520,7 +520,7 @@ int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
     return SUCCESS;
 }
 
-/*******************************************
+/******************************************* 
  PRINT HEX
 **********************************************/
 void print_hex(uint8_t *data, int len)
@@ -529,7 +529,7 @@ void print_hex(uint8_t *data, int len)
         printf("%02X ", data[i]);
 }
 
-/********************************************
+/******************************************** 
  PRINT BITS
 **********************************************/
 void print_bits(uint8_t *data, int len)
@@ -579,7 +579,7 @@ int get_ce_id(char *type)
     return -1;
 }
 
-/*******************************************
+/******************************************* 
  PARSE AND ENCODE FUNCTION
 *********************************************
  Responsibilities:
