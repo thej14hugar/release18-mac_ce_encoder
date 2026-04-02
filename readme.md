@@ -1,38 +1,43 @@
 ## Overview
-The program reads input from a text file named `input.txt`.
-This file defines the MAC PDU size and a list of MAC Control Elements (CEs) along with their parameters.
+The program reads input from a text file named input.txt.
+ 
+This file defines:
+->Total MAC PDU size
+->Number of MAC Control Elements (CEs) to encode
+->CE blocks with parameters
+The program parses the file line-by-line and encodes only the specified number of CEs
  
 ## File Structure
 The input file consists of:
-1. "Global configuration"
+1. "Global parameters"
 2. "Number of Control Elements"
 3. Repeated CE blocks"
  
 ## 1. Global Parameters
 These must appear at the top of the file.
  
-### "pdu_size"
+### "Total pdu_size"
 Defines the total size of the MAC PDU (in bytes)
 -------------------
 ---text---
-pdu_size=<integer>
+Total pdu_size <integer>
 -------------------
  
 ### "num_ce"
 Number of Control Elements defined in the file
 ----------------
 ---text---
-num_ce=<integer>
+num_ce <integer>
 ----------------
  
 ## 2. Control Element Blocks
 Each Control Element is defined using the following structure:
 --------------
 ---text---
-ce_type
+ 
 <ce_name>
-<parameter_1>
-<parameter_2>
+parameter=value
+parameter=value
  
 --------------
  
@@ -42,17 +47,17 @@ Below are the supported CE types and their required parameters.
 ### SHORT_BSR
  
 ---text---
-ce_type
+ 
 <short_bsr>
 lcgid=<integer>
-buffer_size=<integer>
+buffer=<integer>
  
 ----------------------------------------------------------------------
  
 ### PHR (Power Headroom Report)
  
 ---text---
-ce_type
+ 
 <phr>
 ph=<integer>
 pcmax=<integer>
@@ -62,10 +67,9 @@ pcmax=<integer>
 ### ENH_PHR (Enhanced PHR)
  
 ---text---
-ce_type
+ 
 <enh_phr>
-ph1=<integer>
-ph2=<integer>
+ph=<integer>
 pcmax=<integer>
  
 ---------------------------------------------------------------------
@@ -73,76 +77,76 @@ pcmax=<integer>
 ### ENH_BFR (Enhanced Beam Failure Recovery)
  
 ---text---
-ce_type
-<enh_bfr>
-c bits=<integer>
-sp=<integer>
-s bits=<integer>
-num_candidates=<integer>
-AC=<integer>
-ID=<integer>
-rs_id=<integer>
+ 
+<enhanced_bfr>
+ci=<integer>
+s=<integer>
+ac=<integer>
+id=<integer>
+candidate_id=<integer>
  
 ---------------------------------------------------------------------
  
 ### CRNTI
  
 ---text---
-ce_type
+ 
 <crnti>
-crnti=<integer>
+value=<integer>
  
 ---------------------------------------------------------------------
  
 ### REC_BIT_RATE
  
 ---text---
-ce_type
+ 
 <rec_bit_rate>
+lcid=<integer>
 bit_rate=<integer>
+ui_dl_=<0 or 1>
  
 ---------------------------------------------------------------------
  
 ### EXT_BSR
  
 ---text---
-ce_type
-<ext_bsr>
-lcg_id=<integer>
-buffer_size=<integer>
+ 
+<extended_bsr>
+lcg<integer>
+buffer<integer>
  
 -----------------------------------------------------------------------
  
 ### SL_LBT
  
 ---text---
-ce_type
+ 
 <sl_lbt>
-lbt_info=<integer>
+value=<integer>
  
 -----------------------------------------------------------------------
  
 ### DSR
  
 ---text---
-ce_type
+ 
 <dsr>
-dsr=<integer>
+lcg=<integer>
+rt=<integer>
+buffer=<integer>
  
 -----------------------------------------------------------------------
  
 ## Example
  
 ---text---
-pdu_size=12
-num_ce=2
+Total pdu_size 12
+num_ce 2
  
-ce_type
 <short_bsr>
 lcgid=2
-buffer_size=12
+buffer=12
  
-ce_type
 <phr>
 ph=23
 pcmax=5
@@ -151,37 +155,27 @@ pcmax=5
  
 ## Parsing Rules
  
-* The file is parsed "line by line"
-* Keys and values are separated using `=`
-* CE names must be enclosed in `< >`
-* Order of parameters must match the expected format for each CE
-* Empty lines are not ignored
+* CE must start with < >
+* Parameters use =
+* Order of parameters must match expected format
+* Only num_ce CEs are processed
  
 ------------------------------------------------------------------------
  
 ## Error Handling
 The program may produce errors if:
  
-* `ce_type` is missing before a CE block
-* Unknown CE name is used
-* Required parameters are missing
-* `num_ce` does not match actual CE blocks
+* Invalid PDU size
+* Invalid num_ce
+* Unknown CE name
+* Missing parameters
+* Extra parameters
+* *n-integer values
+* Values out of range
  
 -------------------------------------------------------------------------
  
-## Notes
-* All values are expected to be integers unless specified
-* Parameter names are case-sensitive
-* Extra spaces or lines may cause parsing failures
  
---------------------------------------------------------------------------
  
-## Design Rationale
-This format was chosen because:
  
-*  Easy to read and edit manually
-*  Extensible for adding new CE types
-*  Structured for deterministic parsing
- 
----------------------------------------------------------------------------
  
