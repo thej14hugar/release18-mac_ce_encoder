@@ -25,15 +25,15 @@ int check_range(int val, int min, int max, const char *name)
 
 /*----------------------------------
 SHORT BSR
-----------------------------------
+------------------------------------
 MAC subPDU with:
     - 8-bit MAC subheader
 Subheader:
     R (1 BITS) | R(1 BITS) | LCID (6 BITS)
 FORMAT:
-    | LCG ID (2 BITS) | Buffer Size (6 BITS) |
-MAC CE payload (1 BYTES)
-*/
+    | LCG ID (3 BITS) | Buffer Size (5 BITS) |
+Total MAC CE (2 BYTES)
+-------------------------------------*/
 int short_bsr(uint8_t *pdu, int *offset, int argc, int lcg, int buffer)
 {
     if (argc < 2)
@@ -56,10 +56,11 @@ int short_bsr(uint8_t *pdu, int *offset, int argc, int lcg, int buffer)
     if (check_range(lcg, 0, 7, "LCG"))
         return FAILURE;
     if (check_range(buffer, 0, 31, "BUFFER"))
-        return FAILURE;
-    // Octet:
-    // Bits [7:6] → LCG ID
-    // Bits [5:0] → Buffer Size
+    return FAILURE;
+    
+    /*Octet:
+     Bits [7:6] → LCG ID
+     Bits [5:0] → Buffer Size*/
 
     pdu[(*offset)++] = LCID_SHORT_BSR;
     pdu[(*offset)++] = (lcg << 6) | buffer;
@@ -77,8 +78,8 @@ Subheader:
 FORMAT:
     Octet 1 ->| P (1 BITS) | R(1 BITS)| PH (6 BITS)|
     Octet 2 -> |R (2 BITS) | PCMACX (6 BITS)|
-MAC CE payload (2 BYTES)
-*/
+Total MAC CE (3 BYTES)
+-------------------------------------*/
 int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax)
 {
     if (argc == 0)
@@ -135,7 +136,7 @@ int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax)
 }
 
 /*---------------------------------
- CRNTI
+CRNTI
 -----------------------------------
 MAC subPDU with:
     - 8-bit MAC subheader (LCID = 6 bits , R =2 bits)
@@ -144,8 +145,8 @@ Subheader:
 FORMAT:
     Octet 1 -> C-RNTI (8 BITS)
     Octet 2 -> C-RNTI (8 BITS)
-MAC CE payload (2 BYTES)
-*/
+Total MAC CE payload (3 BYTES)
+--------------------------------------*/
 int crnti(uint8_t *pdu, int *offset, int argc, int value)
 {
     if (argc == 0)
@@ -185,21 +186,21 @@ int crnti(uint8_t *pdu, int *offset, int argc, int value)
     return SUCCESS;
 }
 
-/*----------------------------------
+/*--------------------------------------------
 DSR
-----------------------------------
- // MAC subPDU with:
-      // - 16-bit MAC subheader (Extended LCID)
-// Subheader:
-     // Octet 1 → R (1 BITS)| R (1 BITS) | LCID (6 BITS)
-    // Octet 2 → eLCID = 228 (DSR)
-// FORMAT:
-    // Octet 1 → LCG bitmap (which LCGs are present)
-    // Then for each entry:
-    //   Octet → | BT (1 BIT) | R (1 BIT) | Remaining Time (6 BIT) |
-//   Octet → Buffer Size (8 BIT)
-- MAC CE payload (3 BYTES) VARIABLE LENGTH
-*/
+----------------------------------------------
+MAC subPDU with:
+    - 16-bit MAC subheader (Extended LCID)
+Subheader:
+    Octet 1 → R (1 BITS)| R (1 BITS) | LCID (6 BITS)
+    Octet 2 → eLCID(8 BITS)= 228 (DSR)
+FORMAT:
+    Octet 1 → LCG bitmap (which LCGs are present)
+    Then for each entry:
+    Octet → | BT (1 BITS) | R (1 BITS) | Remaining Time (6 BITS) |
+    Octet → Buffer Size (8 BITS)
+MAC CE payload (3 BYTES) VARIABLE LENGTH
+---------------------------------------------*/
 int dsr(uint8_t *pdu, int *offset, int argc, int *params)
 {
     if (argc < 3)
@@ -265,17 +266,18 @@ int dsr(uint8_t *pdu, int *offset, int argc, int *params)
     return SUCCESS;
 }
 
-//----------------------------------
-// REC BIT RATE
-//----------------------------------
-// MAC subPDU with:
-// - 8-bit MAC subheader (LCID = 6 bits , R =2 bits)
-// Subheader:
-// R(1 BITS) | R(1 BITS) | LCID(6 BITS)
-// FORMAT:
-// |Octet 1 -> | lcid (6 BITS) |UL/DL (1 BITS) | BIT RATE (1 BITS)
-// |Octet 2 -> | BIT RATE (5 BITS) | X(1 BITS) | R (2 BITS)
-// - MAC CE payload (2 BYTES)
+/*------------------------------------
+REC BIT RATE
+-------------------------------------
+MAC subPDU with:
+    - 8-bit MAC subheader (LCID = 6 bits , R =2 bits)
+Subheader:
+    R(1 BITS) | R(1 BITS) | LCID(6 BITS)
+FORMAT:
+    |Octet 1 -> | lcid (6 BITS) |UL/DL (1 BITS) | BIT RATE (1 BITS)
+    |Octet 2 -> | BIT RATE (5 BITS) | X(1 BITS) | R (2 BITS)
+- MAC CE payload (2 BYTES)
+-----------------------------------------*/
 int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul_dl)
 {
     if (argc < 3)
@@ -338,19 +340,20 @@ int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul
     return SUCCESS;
 }
 
-//----------------------------------
-// ENHANCED PHR
-//----------------------------------
-// MAC subPDU with:
-// - 16-bit MAC subheader (Extended LCID)
-// Subheader:
-// Octet 1 → R(1 BITS) | R(1 BITS) | LCID(6 BITS)
-// Octet 2 → eLCID = 221 (ENH_PHR)
-// FORMAT:
-// Octet 1 → P(0/1) | V(0/1) | PH1 (6 BIT)
-// Octet 2 → R(0/1) | V(0/1) | PH2 (6 BIT)
-// Octet 3 → R(0/) 2 BIT | PCMAAX (6 BIT)
-// - MAC CE payload (3 BYTES)
+/*----------------------------------
+ENHANCED PHR
+----------------------------------
+MAC subPDU with:
+    - 16-bit MAC subheader (Extended LCID)
+Subheader:
+    Octet 1 → R(1 BITS) | R(1 BITS) | LCID(6 BITS)
+Octet 2 → eLCID = 221 (ENH_PHR)
+FORMAT:
+    Octet 1 → P(0/1) | V(0/1) | PH1 (6 BIT)
+    Octet 2 → R(0/1) | V(0/1) | PH2 (6 BIT)
+    Octet 3 → R(0/) 2 BIT | PCMAAX (6 BIT)
+- MAC CE payload (3 BYTES)
+----------------------------------*/
 int enhanced_phr(uint8_t *pdu, int *offset, int argc, int *params)
 {
     if (argc < 2)
@@ -404,18 +407,19 @@ int enhanced_phr(uint8_t *pdu, int *offset, int argc, int *params)
     return SUCCESS;
 }
 
-//----------------------------------
-// SL-LBT
-//----------------------------------
-// MAC subPDU with:
-// - 16-bit MAC subheader (Extended LCID)
-// Subheader:
-// Octet 1 → R91 BITS) | R(1 BITS) | LCID(6 BITS)
-// Octet 2 → eLCID = 222 (SL-LBT)
-// FORMAT:
-// Octet 1 -> | R R R R4 R3 R2 R1 R0 |
-// R(3 BIT) (0/1) | R4-R0 (5 BIT)
-// - MAC CE payload (1 BYTES)
+/*----------------------------------
+ SL-LBT
+----------------------------------
+MAC subPDU with:
+    16-bit MAC subheader (Extended LCID)
+Subheader:
+    Octet 1 → R91 BITS) | R(1 BITS) | LCID(6 BITS)
+    Octet 2 → eLCID = 222 (SL-LBT)
+FORMAT:
+    Octet 1 -> | R R R R4 R3 R2 R1 R0 |
+    R(3 BIT) (0/1) | R4-R0 (5 BIT)
+MAC CE payload (1 BYTES)
+----------------------------------*/
 int sl_lbt(uint8_t *pdu, int *offset, int value)
 {
     if (value == -1)
@@ -437,19 +441,20 @@ int sl_lbt(uint8_t *pdu, int *offset, int value)
     return SUCCESS;
 }
 
-//----------------------------------
-// ENHANCED BFR
-//----------------------------------
-// MAC subPDU with:
-// - 16-bit MAC subheader (Extended LCID)
-// Subheader:
-// Octet 1 → R(1 BITS) | R(1 BITS) | LCID(6 BITS)
-// Octet 2 → eLCID = 235 (ENH_BFR)
-// FORMAT:
-// Octet 1 -> |C7 C6 C5 C4 C3 C2 C1 SP|
-// Octet 2 -> |S7 S6 S5 S4S S3 S2 S1 S0 |(8 BIT)
-// Octet 3 ->  |AC(0/1) | ID(0/1) | CANDIDATE OR R BITS(6 BIT)|
-// - MAC CE payload (3 BYTES) VARIABLE LENGTH
+/*----------------------------------
+ ENHANCED BFR
+------------------------------------
+MAC subPDU with:
+    16-bit MAC subheader (Extended LCID)
+Subheader:
+    Octet 1 → R(1 BITS) | R(1 BITS) | LCID(6 BITS)
+    Octet 2 → eLCID = 235 (ENH_BFR)
+FORMAT:
+    Octet 1 -> |C7 C6 C5 C4 C3 C2 C1 SP|
+    Octet 2 -> |S7 S6 S5 S4S S3 S2 S1 S0 |(8 BIT)
+    Octet 3 ->  |AC(0/1) | ID(0/1) | CANDIDATE OR R BITS(6 BIT)|
+MAC CE payload (3 BYTES) VARIABLE LENGTH
+ ---------------------------------------*/
 int enhanced_bfr(uint8_t *pdu, int *offset, int argc, int *params)
 {
     if (argc < 5)
@@ -512,18 +517,19 @@ int enhanced_bfr(uint8_t *pdu, int *offset, int argc, int *params)
     return SUCCESS;
 }
 
-//----------------------------------
-// EXTENDED SHORT TRUNCATED BSR
-//----------------------------------
-// MAC subPDU with:
-// - 16-bit MAC subheader (Extended LCID)
-// Subheader:
-// Octet 1 → R(1 BITS) | R91 BITS) | LCID(1 BITS)
-// Octet 2 → eLCID = 245 (EXTENDED_BSR)
-// FORMAT:
-// Octet 1 ->| LCG ID (8 BIT) |
-// Octet 2 ->|Buffer Size (8 BIT) |
-// - MAC CE payload (2 BYTES)
+/*----------------------------------
+ EXTENDED SHORT TRUNCATED BSR
+----------------------------------
+MAC subPDU with:
+    16-bit MAC subheader (Extended LCID)
+Subheader:
+     Octet 1 → R(1 BITS) | R91 BITS) | LCID(1 BITS)
+    Octet 2 → eLCID = 245 (EXTENDED_BSR)
+FORMAT:
+    Octet 1 ->| LCG ID (8 BIT) |
+    Octet 2 ->|Buffer Size (8 BIT) |
+MAC CE payload (2 BYTES) 
+ -----------------------------------*/
 int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
 {
     if (lcg == -1 || buffer == -1)
@@ -551,18 +557,18 @@ int extended_bsr(uint8_t *pdu, int *offset, int lcg, int buffer)
     return SUCCESS;
 }
 
-//----------------------------------
-// PRINT HEX
-//----------------------------------
+/*----------------------------------
+ PRINT HEX
+---------------------------------- */
 void print_hex(uint8_t *data, int len)
 {
     for (int i = 0; i < len; i++)
         printf("%02X ", data[i]);
 }
 
-//----------------------------------
-// PRINT BITS
-//----------------------------------
+/*----------------------------------
+ PRINT BITS
+----------------------------------*/
 void print_bits(uint8_t *data, int len)
 {
     for (int i = 0; i < len; i++)
@@ -573,9 +579,9 @@ void print_bits(uint8_t *data, int len)
     }
 }
 
-//----------------------------------
-// PADDING
-//----------------------------------
+/*---------------------------------
+PADDING
+----------------------------------*/
 void add_padding(uint8_t *buffer, int *offset, int remaining)
 {
     for (int i = 0; i < remaining; i++)
@@ -584,9 +590,9 @@ void add_padding(uint8_t *buffer, int *offset, int remaining)
     }
 }
 
-//----------------------------------
-// TYPE → ID
-//----------------------------------
+/*----------------------------------
+TYPE → ID
+----------------------------------*/
 int get_ce_id(char *type)
 {
     if (strcmp(type, "short_bsr") == 0)
@@ -610,20 +616,20 @@ int get_ce_id(char *type)
     return -1;
 }
 
-//----------------------------------
-// PARSE AND ENCODE FUNCTION
-//----------------------------------
-// Responsibilities:
-// 1. Reads input file
-// 2. Extracts total PDU size
-// 3. Identifies each MAC CE block (<type>)
-// 4. Calls corresponding encoding function
-// 5. Tracks buffer offset
-// 6. Prints encoded bits and hex per CE
-// 7. Adds padding to match PDU size
-// 8. Prints final MAC buffer
-//
-// Acts as controller between parsing and encoding
+/*----------------------------------
+ PARSE AND ENCODE FUNCTION
+----------------------------------
+ Responsibilities:
+ 1. Reads input file
+ 2. Extracts total PDU size
+ 3. Identifies each MAC CE block (<type>)
+ 4. Calls corresponding encoding function
+ 5. Tracks buffer offset
+ 6. Prints encoded bits and hex per CE
+ 7. Adds padding to match PDU size
+ 8. Prints final MAC buffer
+--------------------------------------*/
+
 int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
 {
     if (validate_input_file(filename) == FAILURE)
@@ -697,17 +703,17 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
                 continue;
             }
 
-            //----------------------------------
-            // CE TYPE HANDLING (SWITCH CASE)
-            //----------------------------------
-            // This switch block processes different MAC CE types
-            // based on the ID obtained from the CE name.
-            //
-            // Workflow:
-            // 1. Identify CE type using 'id'
-            // 2. Read required parameters from input file
-            // 3. Call corresponding encoding function
-            // 4. Store encoded data into PDU buffer
+            /*----------------------------------
+             CE TYPE HANDLING (SWITCH CASE)
+            ----------------------------------
+             This switch block processes different MAC CE types
+             based on the ID obtained from the CE name.
+             Workflow:
+             1. Identify CE type using 'id'
+             2. Read required parameters from input file
+             3. Call corresponding encoding function
+             4. Store encoded data into PDU buffer
+            ---------------------------------------*/
             switch (id)
             {
             case 1:
