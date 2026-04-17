@@ -264,8 +264,8 @@ int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul
     // subheader
     pdu[(*offset)++] = LCID_REC_BIT_RATE;
     // payload
-    pdu[(*offset)++] = (lcid << 2) | (ul_dl << 1) | flags.R;
-    pdu[(*offset)++] = (rate << 2) | (flags.X << 1) | flags.R2;
+    pdu[(*offset)++] =(lcid << 2) | (ul_dl << 1) | ((rate >> 5) & 0x01);
+    pdu[(*offset)++] =((rate & 0x1F) << 3) | (flags.X << 2); 
 
     return SUCCESS;
 }
@@ -617,7 +617,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
         printf("ERROR: Invalid PDU size\n");
         return FAILURE;
     }
-    // printf(" TOTAL PDU SIZE : %d\n", *pdu_size);
+    //printf(" TOTAL PDU SIZE : %d\n", *pdu_size);
     //  Read number of CEs
     fgets(line, sizeof(line), fp);
     if (sscanf(line, "num_ce %d", &state.num_ce) != 1 || state.num_ce <= 0)
@@ -626,7 +626,7 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
         return FAILURE;
     }
 
-    // printf("NUMBER OF CE : %d\n\n", state.num_ce);
+    //printf("NUMBER OF CE : %d\n\n", state.num_ce);
     int blank_count = 0;
     int ret = SUCCESS;
     while (state.ce_count < state.num_ce && fgets(line, sizeof(line), fp))
@@ -860,18 +860,16 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
             {
                 int param_count = 0;
                 int lcid = -1, rate = -1, ul_dl = -1;
-
                 for (int i = 0; i < 3; i++)
                 {
-                    if (!fgets(line, sizeof(line), fp))
+	            if (!fgets(line, sizeof(line), fp))
                         break;
-
                     char *ptr = strchr(line, '=');
                     if (ptr == NULL)
 
                         continue;
 
-                    // -------- LCID --------
+		    // -------- LCID --------
                     if (strncmp(line, "lcid", 4) == 0)
                     {
                         if (*(ptr + 1) == '\n' || *(ptr + 1) == '\0')
@@ -924,7 +922,6 @@ int parse_and_encode(const char *filename, uint8_t *pdu, int *pdu_size)
                         param_count++;
                     }
                 }
-
                 ret = rec_bit_rate(pdu, &offset, param_count, lcid, rate, ul_dl, flags, *pdu_size);
                 break;
             }
