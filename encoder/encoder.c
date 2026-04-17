@@ -132,35 +132,19 @@ int phr(uint8_t *pdu, int *offset, int argc, int ph, int pcmax, Flags flags, int
  ********************************************************/
 int crnti(uint8_t *pdu, int *offset, int argc, int value, int pdu_size)
 {
-    if (argc == 0)
-    {
-        printf("ERROR: CRNTI missing parameter(VALUE) \n");
+    if (argc != 1) {
+        printf(argc == 0 ? "ERROR: CRNTI missing parameter(VALUE)\n"
+                : "ERROR: crnti extra parameters detected\n");
         return FAILURE;
     }
 
-    if (argc > 1)
-    {
-        printf("ERROR: crnti extra parameters detected\n");
+    if (value == -1 || value < 0 || value > 65535) {
+        if (value == -1) printf("ERROR: CRNTI value not provided\n");
+        else if (value < 0) printf("ERROR: CRNTI cannot be negative\n");
+        else printf("ERROR: CRNTI out of range (0-65535)\n");
         return FAILURE;
     }
 
-    if (value == -1)
-    {
-        printf("ERROR: CRNTI value not provided \n");
-        return FAILURE;
-    }
-
-    if (value < 0)
-    {
-        printf("ERROR: CRNTI cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (value > 65535)
-    {
-        printf("ERROR: CRNTI out of range (0-65535)\n");
-        return FAILURE;
-    }
     int space = check_pdu_space(*offset, 3, pdu_size);
     if (space == PDU_OVERFLOW)
         return PDU_OVERFLOW;
@@ -186,62 +170,27 @@ int crnti(uint8_t *pdu, int *offset, int argc, int value, int pdu_size)
 **************************************************************/
 int dsr(uint8_t *pdu, int *offset, int argc, int lcg, int rt, int buffer, Flags flags, EncoderState state, int pdu_size)
 {
-    // -------- PARAMETER COUNT CHECK --------
-    if (argc == 0)
-    {
-        printf("ERROR: Parameter Missing\n");
-        return FAILURE;
-    }
+    // -------- ARGs and PARAMs CHECK --------
+	if (argc < 1 || argc > 3) {
+		printf(argc == 0 ? "ERROR: Parameter Missing\n"
+				: "ERROR: dsr extra parameters detected\n");
+		return FAILURE;
+	}
 
-    if (argc > 3)
-    {
-        printf("ERROR: dsr extra parameters detected\n");
-        return FAILURE;
-    }
+	if (lcg < 0 || rt < 0 || buffer < 0) {
+		if (lcg == -1) printf("ERROR: Missing parameter LCG\n");
+		else if (rt == -1) printf("ERROR: Missing parameter RT\n");
+		else if (buffer == -1) printf("ERROR: Missing parameter BUFFER\n");
+		else if (lcg < 0) printf("ERROR: LCG cannot be negative\n");
+		else if (rt < 0) printf("ERROR: RT cannot be negative\n");
+		else printf("ERROR: BUFFER cannot be negative\n");
+		return FAILURE;
+	}
+	// -------- RANGE CHECK --------
+	if (check_range(lcg, 0, 7, "LCG"))
+		return FAILURE;
 
-    // -------- MISSING PARAMETER CHECK --------
-    if (lcg == -1)
-    {
-        printf("ERROR: Missing parameter LCG\n");
-        return FAILURE;
-    }
-
-    if (rt == -1)
-    {
-        printf("ERROR: Missing parameter RT\n");
-        return FAILURE;
-    }
-
-    if (buffer == -1)
-    {
-        printf("ERROR: Missing parameter BUFFER\n");
-        return FAILURE;
-    }
-
-    // -------- NEGATIVE CHECK --------
-    if (lcg < 0)
-    {
-        printf("ERROR: LCG cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (rt < 0)
-    {
-        printf("ERROR: RT cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (buffer < 0)
-    {
-        printf("ERROR: BUFFER cannot be negative\n");
-        return FAILURE;
-    }
-
-    // -------- RANGE CHECK --------
-    if (check_range(lcg, 0, 7, "LCG"))
-        return FAILURE;
-
-    if (check_range(rt, 0, 63, "RT"))
+	if (check_range(rt, 0, 63, "RT"))
         return FAILURE;
 
     if (check_range(buffer, 0, 255, "BUFFER"))
@@ -277,54 +226,29 @@ function : rec_bit_rate
 *********************************************************************/
 int rec_bit_rate(uint8_t *pdu, int *offset, int argc, int lcid, int rate, int ul_dl, Flags flags, int pdu_size)
 {
-    if (argc == 0)
+    // -------- ARGs and PARAMs CHECK -------- //
+    if (argc < 1 || argc > 3)
     {
-        printf("ERROR: Parameter Missing\n");
-        return FAILURE;
-    }
-    if (argc > 3)
-    {
-        printf("ERROR: rec_bit_rate extra parameters detected\n");
-        return FAILURE;
-    }
-    // -------- INVALID CHECK --------
-    if (lcid == -1)
-    {
-        printf("ERROR:  Missing parameter LCID \n");
+        printf(argc == 0 ?
+                "ERROR: Parameter Missing\n" :
+                "ERROR: rec_bit_rate extra parameters detected\n");
         return FAILURE;
     }
 
-    if (rate == -1)
+    if (lcid < 0 || rate < 0 || ul_dl < 0)
     {
-        printf("ERROR:  Missing parameter RATE \n");
+        if (lcid < 0)
+            printf(lcid == -1 ? "ERROR: Missing parameter LCID\n"
+                    : "ERROR: LCID cannot be negative\n");
+        else if (rate < 0)
+            printf(rate == -1 ? "ERROR: Missing parameter RATE\n"
+                    : "ERROR: RATE cannot be negative\n");
+        else
+            printf(ul_dl == -1 ? "ERROR: Missing parameter UL_DL\n"
+                    : "ERROR: UL/DL cannot be negative\n");
+
         return FAILURE;
     }
-
-    if (ul_dl == -1)
-    {
-        printf("ERROR: Missing parameter UL_DL\n");
-        return FAILURE;
-    }
-
-    // -------- NEGATIVE CHECK --------
-    if (lcid < 0)
-    {
-        printf("ERROR: LCID cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (rate < 0)
-    {
-        printf("ERROR: RATE cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (ul_dl < 0)
-    {
-        printf("ERROR: UL/DL cannot be negative\n");
-        return FAILURE;
-    }
-
     // -------- RANGE CHECK --------
     if (check_range(lcid, 0, 63, "LCID"))
         return FAILURE;
@@ -360,73 +284,31 @@ function: enhanced phr
 int enhanced_phr(uint8_t *pdu, int *offset, int argc, int *params, int pdu_size)
 {
     // Expected: params = [PH1, PH2, PCMAX]
-
-    int ph1 = (argc > 0) ? params[0] : -1;
-    int ph2 = (argc > 1) ? params[1] : -1;
+    int ph1   = (argc > 0) ? params[0] : -1;
+    int ph2   = (argc > 1) ? params[1] : -1;
     int pcmax = (argc > 2) ? params[2] : -1;
 
-    // -------- MISSING PARAMETER CHECK --------
-    if (ph1 == -1 || ph2 == -1 || pcmax == -1)
-    {
-        printf("ERROR: Missing parameter ");
-
-        if (ph1 == -1)
-            printf("PH1 ");
-
-        if (ph2 == -1)
-            printf("PH2 ");
-
-        if (pcmax == -1)
-            printf("PCMAX ");
-
-        printf("\n");
-        return FAILURE;
-    }
-
-    if (ph1 == -1)
-    {
-        printf("ERROR: Missing parameter PH1\n");
-        return FAILURE;
-    }
-
-    if (ph2 == -1)
-    {
-        printf("ERROR: Missing parameter PH2\n");
-        return FAILURE;
-    }
-
-    if (pcmax == -1)
-    {
-        printf("ERROR: Missing parameter PCMAX\n");
-        return FAILURE;
-    }
-
-    // -------- EXTRA PARAMETER CHECK --------
-    if (argc > 3)
-    {
+    // -------- ARG COUNT CHECK --------
+    if (argc > 3) {
         printf("ERROR: Extra parameters detected\n");
         return FAILURE;
     }
 
-    // -------- NEGATIVE CHECK --------
-    if (ph1 < 0)
+    // -------- MISSING / NEGATIVE CHECK --------
+    if (ph1 < 0 || ph2 < 0 || pcmax < 0)
     {
-        printf("ERROR: PH1 cannot be negative\n");
+        printf("ERROR: ");
+
+        if (ph1 < 0)
+            printf(ph1 == -1 ? "Missing parameter PH1 " : "PH1 cannot be negative ");
+        if (ph2 < 0)
+            printf(ph2 == -1 ? "Missing parameter PH2 " : "PH2 cannot be negative ");
+        if (pcmax < 0)
+            printf(pcmax == -1 ? "Missing parameter PCMAX " : "PCMAX cannot be negative ");
+
+        printf("\n");
         return FAILURE;
     }
-
-    if (ph2 < 0)
-    {
-        printf("ERROR: PH2 cannot be negative\n");
-        return FAILURE;
-    }
-
-    if (pcmax < 0)
-    {
-        printf("ERROR: PCMAX cannot be negative\n");
-        return FAILURE;
-    }
-
     // -------- RANGE CHECK --------
     if (check_range(ph1, 0, 63, "PH1"))
         return FAILURE;
