@@ -29,6 +29,117 @@ protected:
 class ParseTest : public ::testing::Test
 {
 };
+/******************************************
+ * TEST CASES FOR SL-LBT
+ *******************************************/
+// Valid case
+TEST_F(MACTest, SLLBT_ValidInput)
+{
+    uint8_t temp_pdu[10] = {0};
+    int value = 10;
+
+    temp_pdu[0] = LCID_EXT_1BYTE;
+    temp_pdu[1] = ELCID_SL_LBT;
+    temp_pdu[2] = value & 0x1F;
+
+    int result = sl_lbt(pdu, &offset, 1, value, 3);
+
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_EQ(pdu[0], temp_pdu[0]);
+    EXPECT_EQ(pdu[1], temp_pdu[1]);
+    EXPECT_EQ(pdu[2], temp_pdu[2]);
+}
+
+// Missing Parameter
+TEST_F(MACTest, SLLBT_MissingParameter)
+{
+    int result = sl_lbt(pdu, &offset, 0, -1, 3);
+
+    EXPECT_EQ(result, FAILURE);
+    EXPECT_EQ(pdu[0], 0);
+}
+
+// Extra parameters
+TEST_F(MACTest, SLLBT_ExtraParameters)
+{
+    int result = sl_lbt(pdu, &offset, 2, 10, 3);
+
+    EXPECT_EQ(result, FAILURE);
+    EXPECT_EQ(pdu[0], 0);
+}
+
+// Invalid range 
+TEST_F(MACTest, SLLBT_InvalidRange)
+{
+    int result = sl_lbt(pdu, &offset, 1, 40, 3);
+
+    EXPECT_EQ(result, FAILURE);
+    EXPECT_EQ(pdu[0], 0);
+}
+
+// Negative value
+TEST_F(MACTest, SLLBT_NegativeValue)
+{
+    int result = sl_lbt(pdu, &offset, 1, -5, 3);
+
+    EXPECT_EQ(result, FAILURE);
+    EXPECT_EQ(pdu[0], 0);
+}
+
+// Boundary max
+TEST_F(MACTest, SLLBT_MaxBoundary)
+{
+    uint8_t temp_pdu[10] = {0};
+    int value = 31;
+
+    temp_pdu[0] = LCID_EXT_1BYTE;
+    temp_pdu[1] = ELCID_SL_LBT;
+    temp_pdu[2] = 31;
+
+    int result = sl_lbt(pdu, &offset, 1, value, 3);
+
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_EQ(pdu[0], temp_pdu[0]);
+    EXPECT_EQ(pdu[1], temp_pdu[1]);
+    EXPECT_EQ(pdu[2], temp_pdu[2]);
+}
+
+// Boundary min
+TEST_F(MACTest, SLLBT_MinBoundary)
+{
+    uint8_t temp_pdu[10] = {0};
+    int value = 0;
+    temp_pdu[0] = LCID_EXT_1BYTE;
+    temp_pdu[1] = ELCID_SL_LBT;
+    temp_pdu[2] = 0;
+
+    int result = sl_lbt(pdu, &offset, 1, value, 3);
+
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_EQ(pdu[0], temp_pdu[0]);
+    EXPECT_EQ(pdu[1], temp_pdu[1]);
+    EXPECT_EQ(pdu[2], temp_pdu[2]);
+}
+TEST_F(ParseTest, SLLBT_ValueMissing)
+{
+    FILE *fp = fopen("test_input.txt", "w");
+
+    fprintf(fp,
+            "Total pdu_size 30\n"
+            "num_ce 1\n"
+            "<sl_lbt>\n"
+            "value=\n");
+
+    fclose(fp);
+
+    uint8_t pdu[100] = {0};
+    int size = 0;
+
+    int result = parse_and_encode("test_input.txt", pdu, &size);
+
+    EXPECT_EQ(result, FAILURE);
+    EXPECT_EQ(pdu[0], 0);
+}
 
 /******************************************
  * TEST CASES FOR SHORT _BSR
@@ -198,7 +309,6 @@ TEST_F(ParseTest, ShortBSR_LCGID_ValueMissing)
     EXPECT_EQ(result, FAILURE);
     EXPECT_EQ(pdu[0], 0);
 }
-
 /******************************************
  * TEST CASES FOR PHR
  *******************************************/
@@ -457,131 +567,18 @@ TEST_F(ParseTest, CRNTI_ValueMissing)
 }
 
 /******************************************
- * TEST CASES FOR SL-LBT
- *******************************************/
-// Valid case
-TEST_F(MACTest, SLLBT_ValidInput)
-{
-    uint8_t temp_pdu[10] = {0};
-    int value = 10;
-
-    temp_pdu[0] = LCID_EXT_1BYTE;
-    temp_pdu[1] = ELCID_SL_LBT;
-    temp_pdu[2] = value & 0x1F;
-
-    int result = sl_lbt(pdu, &offset, 1, value, 3);
-
-    EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
-}
-
-// Missing value
-TEST_F(MACTest, SLLBT_MissingValue)
-{
-    int result = sl_lbt(pdu, &offset, 0, -1, 3);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-// Extra parameters
-TEST_F(MACTest, SLLBT_ExtraParameters)
-{
-    int result = sl_lbt(pdu, &offset, 2, 10, 3);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-// Invalid range (>255)
-TEST_F(MACTest, SLLBT_InvalidRange)
-{
-    int result = sl_lbt(pdu, &offset, 1, 40, 3);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-// Negative value
-TEST_F(MACTest, SLLBT_NegativeValue)
-{
-    int result = sl_lbt(pdu, &offset, 1, -5, 3);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-// Boundary max
-TEST_F(MACTest, SLLBT_MaxBoundary)
-{
-    uint8_t temp_pdu[10] = {0};
-    int value = 31;
-
-    temp_pdu[0] = LCID_EXT_1BYTE;
-    temp_pdu[1] = ELCID_SL_LBT;
-    temp_pdu[2] = 31;
-
-    int result = sl_lbt(pdu, &offset, 1, value, 3);
-
-    EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
-}
-
-// Boundary min
-TEST_F(MACTest, SLLBT_MinBoundary)
-{
-    uint8_t temp_pdu[10] = {0};
-    int value = 0;
-    temp_pdu[0] = LCID_EXT_1BYTE;
-    temp_pdu[1] = ELCID_SL_LBT;
-    temp_pdu[2] = 0;
-
-    int result = sl_lbt(pdu, &offset, 1, value, 3);
-
-    EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
-}
-TEST_F(ParseTest, SLLBT_ValueMissing)
-{
-    FILE *fp = fopen("test_input.txt", "w");
-
-    fprintf(fp,
-            "Total pdu_size 30\n"
-            "num_ce 1\n"
-            "<sl_lbt>\n"
-            "value=\n");
-
-    fclose(fp);
-
-    uint8_t pdu[100] = {0};
-    int size = 0;
-
-    int result = parse_and_encode("test_input.txt", pdu, &size);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-/******************************************
  * TEST CASES FOR REC_BIT_RATE
  *******************************************/
-// Valid case
 TEST_F(MACTest, RecBitRate_ValidInput)
 {
     uint8_t temp_pdu[10] = {0};
     int lcid = 3;
-    int rate = 20;
+    int rate = 20; // 010100
     int ul_dl = 1;
 
     temp_pdu[0] = LCID_REC_BIT_RATE;
-    temp_pdu[1] = lcid << 2 | ul_dl << 1;
-    temp_pdu[2] = rate << 2;
+    temp_pdu[1] = (lcid << 2) | (ul_dl << 1) | ((rate >> 5) & 0x01);
+    temp_pdu[2] = ((rate & 0x1F) << 3) | (flags.X << 2);
 
     int result = rec_bit_rate(pdu, &offset, 3, lcid, rate, ul_dl, flags, 3);
 
@@ -590,7 +587,6 @@ TEST_F(MACTest, RecBitRate_ValidInput)
     EXPECT_EQ(pdu[1], temp_pdu[1]);
     EXPECT_EQ(pdu[2], temp_pdu[2]);
 }
-
 // Missing rate
 TEST_F(MACTest, RecBitRate_MissingRate)
 {
@@ -618,6 +614,7 @@ TEST_F(MACTest, RecBitRate_AllMissing)
     int result = rec_bit_rate(pdu, &offset, 0, -1, -1, -1, flags, 3);
     EXPECT_EQ(result, FAILURE);
 }
+
 // extra parameter
 TEST_F(MACTest, RecBitRate_ExtraParameters)
 {
@@ -626,7 +623,8 @@ TEST_F(MACTest, RecBitRate_ExtraParameters)
     EXPECT_EQ(result, FAILURE);
     EXPECT_EQ(pdu[0], 0);
 }
-// Invalid LCID
+
+// invalid lcg
 TEST_F(MACTest, RecBitRate_InvalidLCIDRange)
 {
     int result = rec_bit_rate(pdu, &offset, 3, 80, 20, 1, flags, 3);
@@ -656,28 +654,25 @@ TEST_F(MACTest, RecBitRate_NegativeValues)
 
     EXPECT_EQ(result, FAILURE);
 }
-
-// Max boundary
+// max boundary
 TEST_F(MACTest, RecBitRate_MaxBoundaryValues)
 {
     uint8_t temp_pdu[10] = {0};
-    int lcid = 7;
-    int rate = 63;
+    int lcid = 63;
+    int rate = 63; // 111111
     int ul_dl = 1;
 
     temp_pdu[0] = LCID_REC_BIT_RATE;
-    temp_pdu[1] = lcid << 2 | ul_dl << 1;
-    temp_pdu[2] = rate << 2;
+    temp_pdu[1] = (lcid << 2) | (ul_dl << 1) | ((rate >> 5) & 0x01);
+    temp_pdu[2] = ((rate & 0x1F) << 3) | (flags.X << 2);
 
     int result = rec_bit_rate(pdu, &offset, 3, lcid, rate, ul_dl, flags, 3);
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
     EXPECT_EQ(pdu[1], temp_pdu[1]);
     EXPECT_EQ(pdu[2], temp_pdu[2]);
 }
-
-// Min boundary
+// min boundary
 TEST_F(MACTest, RecBitRate_MinBoundaryValues)
 {
     uint8_t temp_pdu[10] = {0};
@@ -686,17 +681,13 @@ TEST_F(MACTest, RecBitRate_MinBoundaryValues)
     int ul_dl = 0;
 
     temp_pdu[0] = LCID_REC_BIT_RATE;
-    temp_pdu[1] = lcid << 2 | ul_dl << 1;
-    temp_pdu[2] = rate << 2;
+    temp_pdu[1] = 0;
+    temp_pdu[2] = (flags.X << 2);
 
     int result = rec_bit_rate(pdu, &offset, 3, lcid, rate, ul_dl, flags, 3);
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
 }
-
 TEST_F(ParseTest, RecBitRate_Rate_ValueMissing)
 {
     uint8_t pdu[100] = {0};
@@ -719,132 +710,127 @@ TEST_F(ParseTest, RecBitRate_Rate_ValueMissing)
     EXPECT_EQ(result, FAILURE);
     EXPECT_EQ(pdu[0], 0);
 }
-
-/******************************************
+/*********************************************
  * TEST CASES FOR DSR
- *******************************************/
-// Valid case
-TEST_F(MACTest, DSR_ValidInput)
+ *********************************************/
+TEST_F(MACTest, DSR_ValidSingleEntry)
 {
     uint8_t temp_pdu[10] = {0};
-    int lcg = 3;
-    int rt = 4;
-    int buffer = 20;
+    int params[3] = {3, 4, 20};
+
+    uint8_t length = 1 + (1 * 2); // bitmap + (rt,buffer)
 
     temp_pdu[0] = LCID_EXT_1BYTE;
     temp_pdu[1] = ELCID_DSR;
-    temp_pdu[2] = (1 << lcg);
-    temp_pdu[3] = (rt & 0x3F);
-    temp_pdu[4] = buffer;
+    temp_pdu[2] = length;
+    temp_pdu[3] = (1 << 3);
 
-    int result = dsr(pdu, &offset, 3, lcg, rt, buffer, flags, state, 5);
+    temp_pdu[4] = (flags.BT << 7) | (4 & 0x3F);
+    temp_pdu[5] = 20;
+
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 6);
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
+    for (int i = 0; i < 6; i++)
+        EXPECT_EQ(pdu[i], temp_pdu[i]);
 }
-
-// Missing buffer
-TEST_F(MACTest, DSR_MissingBuffer)
+// multiple entries
+TEST_F(MACTest, DSR_ValidMultipleEntries)
 {
-    int result = dsr(pdu, &offset, 2, 3, 4, -1, flags, state, 5);
+    uint8_t temp_pdu[15] = {0};
+    int params[6] = {1, 10, 50, 3, 20, 60};
+
+    uint8_t length = 1 + (2 * 2);
+
+    temp_pdu[0] = LCID_EXT_1BYTE;
+    temp_pdu[1] = ELCID_DSR;
+    temp_pdu[2] = length;
+    temp_pdu[3] = (1 << 1) | (1 << 3);
+
+    temp_pdu[4] = (flags.BT << 7) | (10 & 0x3F);
+    temp_pdu[5] = 50;
+
+    temp_pdu[6] = (flags.BT << 7) | (20 & 0x3F);
+    temp_pdu[7] = 60;
+
+    int result = dsr(pdu, &offset, 6, params, flags, &state, 8);
+
+    EXPECT_EQ(result, SUCCESS);
+}
+// missing parameters
+TEST_F(MACTest, DSR_MissingParameters)
+{
+    int result = dsr(pdu, &offset, 0, NULL, flags, &state, 10);
     EXPECT_EQ(result, FAILURE);
 }
-
-// Missing RT
-TEST_F(MACTest, DSR_MissingRT)
-{
-    int result = dsr(pdu, &offset, 2, 3, -1, 20, flags, state, 5);
-    EXPECT_EQ(result, FAILURE);
-}
-
-// Missing LCG
-TEST_F(MACTest, DSR_MissingLCG)
-{
-    int result = dsr(pdu, &offset, 2, -1, 4, 20, flags, state, 5);
-    EXPECT_EQ(result, FAILURE);
-}
-
-// All missing
-TEST_F(MACTest, DSR_AllMissing)
-{
-    int result = dsr(pdu, &offset, 0, -1, -1, -1, flags, state, 5);
-    EXPECT_EQ(result, FAILURE);
-}
-TEST_F(MACTest, DSR_ExtraParameters)
-{
-    int result = dsr(pdu, &offset, 4, 3, 4, 20, flags, state, 5);
-
-    EXPECT_EQ(result, FAILURE);
-    EXPECT_EQ(pdu[0], 0);
-}
-
-// Invalid LCG
+// invalid LCG
 TEST_F(MACTest, DSR_InvalidLCGRange)
 {
-    int result = dsr(pdu, &offset, 3, 10, 4, 20, flags, state, 5);
+    int params[3] = {10, 4, 20};
+
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 10);
     EXPECT_EQ(result, FAILURE);
 }
-
-// Invalid RT
+// invalid RT
 TEST_F(MACTest, DSR_InvalidRTRange)
 {
-    int result = dsr(pdu, &offset, 3, 3, 78, 20, flags, state, 5);
+    int params[3] = {3, 100, 20};
+
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 10);
     EXPECT_EQ(result, FAILURE);
 }
-
-// Invalid buffer
+// invalid BUFFER
 TEST_F(MACTest, DSR_InvalidBufferRange)
 {
-    int result = dsr(pdu, &offset, 3, 3, 4, 300, flags, state, 5);
+    int params[3] = {3, 4, 300};
+
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 10);
     EXPECT_EQ(result, FAILURE);
 }
+// negative values
+TEST_F(MACTest, DSR_NegativeValues)
+{
+    int params[3] = {3, -1, 20};
 
-// Max boundary
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 10);
+    EXPECT_EQ(result, FAILURE);
+}
+// max boundary
 TEST_F(MACTest, DSR_MaxBoundaryValues)
 {
     uint8_t temp_pdu[10] = {0};
-    int lcg = 7;
-    int rt = 7;
-    int buffer = 63;
+    int params[3] = {7, 63, 255};
+
+    uint8_t length = 1 + 2;
 
     temp_pdu[0] = LCID_EXT_1BYTE;
     temp_pdu[1] = ELCID_DSR;
-    temp_pdu[2] = (1 << lcg);
-    temp_pdu[3] = (rt & 0x3F);
-    temp_pdu[4] = buffer;
+    temp_pdu[2] = length;
+    temp_pdu[3] = (1 << 7);
+    temp_pdu[4] = (flags.BT << 7) | 63;
+    temp_pdu[5] = 255;
 
-    int result = dsr(pdu, &offset, 3, lcg, rt, buffer, flags, state, 5);
-
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 6);
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
 }
-
-// Min boundary
+// min boundary
 TEST_F(MACTest, DSR_MinBoundaryValues)
 {
     uint8_t temp_pdu[10] = {0};
-    int lcg = 0;
-    int rt = 0;
-    int buffer = 0;
+    int params[3] = {0, 0, 0};
+
+    uint8_t length = 1 + 2;
 
     temp_pdu[0] = LCID_EXT_1BYTE;
     temp_pdu[1] = ELCID_DSR;
-    temp_pdu[2] = (1 << lcg);
-    temp_pdu[3] = (rt & 0x3F);
-    temp_pdu[4] = buffer;
+    temp_pdu[2] = length;
+    temp_pdu[3] = (1 << 0);
+    temp_pdu[4] = (flags.BT << 7);
+    temp_pdu[5] = 0;
 
-    int result = dsr(pdu, &offset, 3, lcg, rt, buffer, flags, state, 5);
-
+    int result = dsr(pdu, &offset, 3, params, flags, &state, 6);
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
 }
-
 TEST_F(ParseTest, DSR_Buffer_ValueMissing)
 {
     uint8_t pdu[100] = {0};
@@ -1015,23 +1001,23 @@ TEST_F(ParseTest, ExtendedBSR_MissingBuffer)
  *******************************************/
 TEST_F(MACTest, EnhancedPHR_ValidInput)
 {
+    offset = 0;
+
     uint8_t temp_pdu[10] = {0};
-    int params[3] = {20, 25, 15}; // PH1, PH2, PCMAX
+    int params[3] = {20, 25, 15};
 
     temp_pdu[0] = LCID_EXT_1BYTE;
     temp_pdu[1] = ELCID_ENH_PHR;
-    temp_pdu[2] = (20 << 1);
-    temp_pdu[3] = (25 << 1);
-    temp_pdu[4] = (15 << 1);
+    temp_pdu[2] = (20 & 0x3F);
+    temp_pdu[3] = (25 & 0x3F);
+    temp_pdu[4] = (15 & 0x3F);
 
     int result = enhanced_phr(pdu, &offset, 3, params, 5);
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[0], temp_pdu[0]);
-    EXPECT_EQ(pdu[1], temp_pdu[1]);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
-    EXPECT_EQ(pdu[3], temp_pdu[3]);
-    EXPECT_EQ(pdu[4], temp_pdu[4]);
+
+    for (int i = 0; i < 5; i++)
+        EXPECT_EQ(pdu[i], temp_pdu[i]);
 }
 
 // Missing PH1
@@ -1107,27 +1093,29 @@ TEST_F(MACTest, EnhancedPHR_NegativeValues)
 // Max boundary
 TEST_F(MACTest, EnhancedPHR_MaxBoundary)
 {
+    offset = 0;
     uint8_t temp_pdu[10] = {0};
-
     int params[3] = {63, 63, 63};
 
     temp_pdu[0] = LCID_EXT_1BYTE;
     temp_pdu[1] = ELCID_ENH_PHR;
-    temp_pdu[2] = (63 << 1);
-    temp_pdu[3] = (63 << 1);
-    temp_pdu[4] = (63 << 1);
+    temp_pdu[2] = 63;
+    temp_pdu[3] = 63;
+    temp_pdu[4] = 63;
 
     int result = enhanced_phr(pdu, &offset, 3, params, 5);
 
     EXPECT_EQ(result, SUCCESS);
-    EXPECT_EQ(pdu[2], temp_pdu[2]);
+
+    for (int i = 0; i < 5; i++)
+        EXPECT_EQ(pdu[i], temp_pdu[i]);
 }
 
 // Min boundary
 TEST_F(MACTest, EnhancedPHR_MinBoundary)
 {
+    offset = 0;
     int params[3] = {0, 0, 0};
-
     int result = enhanced_phr(pdu, &offset, 3, params, 5);
     EXPECT_EQ(result, SUCCESS);
 }
@@ -1151,3 +1139,5 @@ TEST_F(ParseTest, EnhancedPHR_PCMAX_Missing)
 
     EXPECT_EQ(result, FAILURE);
 }
+
+
