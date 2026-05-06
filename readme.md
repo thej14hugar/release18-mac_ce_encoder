@@ -1,6 +1,24 @@
 MAC Control Element Encoder
 ## Overview
-This program reads input from a file (input.txt) and encodes MAC Control Elements (CEs) into a MAC PDU.
+This project implements a UL MAC CE encoder for 5G NR Release 18 specifications.
+The encoder supports:
+- Multiple MAC CE aggregation
+- MAC PDU length validation
+- Hexadecimal byte stream generation
+- Invalid input and boundary condition handling
+
+## My Contribution
+Worked on:
+- Encoder validation logic
+- MAC CE aggregation handling
+- Testing and debugging
+- Hex stream generation support
+
+## Technologies Used
+- C Programming
+- Git & GitHub
+- Linux
+- Telecom Protocol Concepts
 
 ## The input file specifies:
 - Total MAC PDU size
